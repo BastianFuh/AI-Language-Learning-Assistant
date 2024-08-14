@@ -24,7 +24,7 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         self.model = None
 
         super().__init__(
-            buffer_type=ctypes.c_wchar_p,
+            buffer_type=ctypes.c_byte,
             data_buffer_size=data_buffer_size,
             in_data=in_data,
             e_din_avail=e_din_avail)
@@ -58,8 +58,11 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         options = whisper.DecodingOptions()
         result = whisper.decode(self.model, mel, options)
         self.logger().info(f"Detected Text: {result.text}")
-
-        data_out[:] = [result.text]
+        # TODO: Store the text data
+        #text_encoded = result.text.encode()
+        #len_text = len(text_encoded)
+        #data_out[:len_text] = text_encoded
+        #data_out[len_text:] = [None for x in range(len_text)]
 
     def clean_up(self):
         pass

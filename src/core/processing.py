@@ -95,7 +95,7 @@ class DummyActionProcess(AbstractActionProcess):
             e_din_avail=e_din_avail)
 
     def process(self, data_in, data_out):
-        self.logger().info(f"Received data { data_in}")
+        self.logger().debug(f"Received data {data_in}")
 
     def clean_up(self):
         pass
