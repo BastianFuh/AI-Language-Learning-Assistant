@@ -7,7 +7,6 @@ from multiprocessing.sharedctypes import Array
 import logging
 
 
-
 class AbstractActionProcess(Process):
     """
         This class represent an abstract processing module which runs inside
@@ -28,59 +27,46 @@ class AbstractActionProcess(Process):
         self.out_data = Array(buffer_type, int(data_buffer_size))
 
         # Update the key word arguements to include the events
-        kwargs.update(
-            {
-                "_e_stop_process"       : self._e_stop_process,
 
-                "e_din_avail"           : e_din_avail,
-                "in_data"               : in_data,
+        self._e_din_avail = e_din_avail
+        self._in_data = in_data
 
-                "out_data"              : self.out_data,
-                "e_dout_avail"          : self.e_dout_avail,
-            }
-        )
 
         # Initiliase the process
-        Process.__init__(self, target=self._init, args=args, kwargs=kwargs)
+        Process.__init__(self, args=args, kwargs=kwargs)
 
-    @classmethod
-    def _init(cls, *args, **kwargs):
-        cls._run(*args, **kwargs)
+    def run(self, **kwargs):
+        self._run(**kwargs)
 
-    @classmethod
-    def _run(cls, **kwargs):
+    def _run(self, **kwargs):
         """ Run function which executes the process method.
         """
-        while not kwargs["_e_stop_process"].is_set():
+        while not self._e_stop_process.is_set():
 
-            e_data_avail = kwargs["e_din_avail"]
-            e_data_processed = kwargs["e_dout_avail"]
-            e_data_avail.wait()
+            self._e_din_avail.wait()
 
-            cls.process(
-                kwargs["in_data"],
-                kwargs["out_data"]
+            self.process(
+                self._in_data,
+                self.out_data
             )
 
-            e_data_avail.clear()
-            e_data_processed.set()
+            self.e_dout_avail.set()
+            self.e_dout_avail.clear()
 
-        cls.clean_up()
+        self.clean_up()
 
-    @classmethod
     @abstractmethod
-    def process(cls, data_in, data_out):
+    def process(self, data_in : Array, data_out : Array):
         """ This method should process the available data in data_in and put the result into
         data out. It has to be overwritten by any child class.
-        
+
         Important is also that this function is called in the main processing loop. Therefore
         is should only process the data once it is available and should not have a loop which
         waits for more data. 
         """
 
-    @classmethod
     @abstractmethod
-    def clean_up(cls):
+    def clean_up(self):
         """ Cleans up the thread when it is killed.
         """
 
@@ -98,18 +84,18 @@ class AbstractActionProcess(Process):
         return cls._logger
 
 
-
 class DummyActionProcess(AbstractActionProcess):
     """Dummy module which only logs the current data.
     """
 
-    def __init__(self, data_buffer_size=1024, in_data=None, e_din_avail=None,):
-        super().__init__(data_buffer_size, in_data, e_din_avail)
+    def __init__(self, in_data=None, e_din_avail=None,):
+        super().__init__(
+            data_buffer_size=0,
+            in_data=in_data,
+            e_din_avail=e_din_avail)
 
-    @classmethod
-    def process(cls, data_in, data_out):
-        cls.logger().debug(f"Received data {data_in}")
+    def process(self, data_in, data_out):
+        self.logger().info(f"Received data { data_in}")
 
-    @classmethod
-    def clean_up(cls):
+    def clean_up(self):
         pass
