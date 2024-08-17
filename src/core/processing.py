@@ -2,10 +2,11 @@
 """
 from abc import abstractmethod
 from multiprocessing import Process, Event
-from multiprocessing.sharedctypes import Array
+from multiprocessing.managers import SyncManager
 
 import logging
 
+import ctypes
 
 class AbstractActionProcess(Process):
     """
@@ -15,7 +16,7 @@ class AbstractActionProcess(Process):
 
     _logger = None
 
-    def __init__(self, *args, data_buffer_size=1024, buffer_type="d", in_data=None,
+    def __init__(self, manager:SyncManager, *args, data_buffer_size=1024, buffer_type="d", in_data=None,
                  e_din_avail=None, **kwargs):
         # Public Events
         self.e_dout_avail = Event()
@@ -24,7 +25,10 @@ class AbstractActionProcess(Process):
         self._e_stop_process = Event()
 
         # Public Shared Data
-        self.out_data = Array(buffer_type, int(data_buffer_size))
+        if buffer_type == ctypes.c_wchar_p:
+            self.out_data = manager.Value(buffer_type, "")
+        else:
+            self.out_data = manager.Array(buffer_type,  range(int(data_buffer_size)))
 
         # Update the key word arguements to include the events
 
@@ -56,7 +60,7 @@ class AbstractActionProcess(Process):
         self.clean_up()
 
     @abstractmethod
-    def process(self, data_in : Array, data_out : Array):
+    def process(self, data_in, data_out):
         """ This method should process the available data in data_in and put the result into
         data out. It has to be overwritten by any child class.
 
@@ -88,14 +92,21 @@ class DummyActionProcess(AbstractActionProcess):
     """Dummy module which only logs the current data.
     """
 
-    def __init__(self, in_data=None, e_din_avail=None,):
+    def __init__(self, manager, in_data=None, e_din_avail=None,):
         super().__init__(
+            manager,
             data_buffer_size=0,
             in_data=in_data,
             e_din_avail=e_din_avail)
 
     def process(self, data_in, data_out):
-        self.logger().debug(f"Received data {data_in}")
+
+        data = data_in.value
+        if isinstance(data_in, ctypes.c_wchar_p):
+            data = data_in.value
+            self.logger().debug(f"Received data {data}")
+        else:
+            self.logger().debug(f"Received data {data}")
 
     def clean_up(self):
         pass

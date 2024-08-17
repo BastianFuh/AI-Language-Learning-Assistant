@@ -1,7 +1,6 @@
 """ Module for the Speech Recognition using whisper. See https://openai.com/index/whisper/ for more.
 """
 import ctypes
-from multiprocessing.sharedctypes import Array
 import whisper
 import scipy
 import numpy as np
@@ -15,7 +14,7 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
     """
     DEFAULT_DURATION = 30
 
-    def __init__(self, duration=DEFAULT_DURATION, data_buffer_size=1, in_data=None, e_din_avail=None):
+    def __init__(self, manager, duration=DEFAULT_DURATION, data_buffer_size=1, in_data=None, e_din_avail=None):
         self.__class__.duration = duration
 
         self.duration = 30
@@ -24,7 +23,8 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         self.model = None
 
         super().__init__(
-            buffer_type=ctypes.c_byte,
+            manager,
+            buffer_type=ctypes.c_wchar_p,
             data_buffer_size=data_buffer_size,
             in_data=in_data,
             e_din_avail=e_din_avail)
@@ -58,11 +58,8 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         options = whisper.DecodingOptions()
         result = whisper.decode(self.model, mel, options)
         self.logger().info(f"Detected Text: {result.text}")
-        # TODO: Store the text data
-        #text_encoded = result.text.encode()
-        #len_text = len(text_encoded)
-        #data_out[:len_text] = text_encoded
-        #data_out[len_text:] = [None for x in range(len_text)]
+
+        self.out_data.value = result.text
 
     def clean_up(self):
         pass
