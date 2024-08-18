@@ -1,12 +1,14 @@
 """ Module containing the abstract base class for the Processing modules.
 """
-from abc import abstractmethod
-from multiprocessing import Process, Event
-from multiprocessing.managers import SyncManager
-
 import logging
 
 import ctypes
+
+from abc import abstractmethod
+
+from multiprocessing.managers import SyncManager
+from torch.multiprocessing import Process
+
 
 class AbstractActionProcess(Process):
     """
@@ -16,28 +18,28 @@ class AbstractActionProcess(Process):
 
     _logger = None
 
-    def __init__(self, manager:SyncManager, *args, data_buffer_size=1024, buffer_type="d", in_data=None,
-                 e_din_avail=None, **kwargs):
-        # Public Events
-        self.e_dout_avail = Event()
+    def __init__(self, manager:SyncManager, *args, output_queues=None, **kwargs):
 
-        # Private Events
-        self._e_stop_process = Event()
+        self._e_stop_process = manager.Event()
 
-        # Public Shared Data
-        if buffer_type == ctypes.c_wchar_p:
-            self.out_data = manager.Value(buffer_type, "")
-        else:
-            self.out_data = manager.Array(buffer_type,  range(int(data_buffer_size)))
+        self.input_queue = manager.Queue()
 
-        # Update the key word arguements to include the events
-
-        self._e_din_avail = e_din_avail
-        self._in_data = in_data
-
+        self.output_queues = manager.list()
+        if output_queues is not None:
+            self.output_queues.extend(output_queues)
 
         # Initiliase the process
         Process.__init__(self, args=args, kwargs=kwargs)
+
+    def add_output_queue(self, queue):
+        """Adds a module which will receive the output of this module.
+        """
+        self.output_queues.append(queue)
+
+    def connect_module(self, module):
+        """ Connects the input of the given module to the output of this module.
+        """
+        self.output_queues.append(module.input_queue)
 
     def run(self, **kwargs):
         self._run(**kwargs)
@@ -47,20 +49,19 @@ class AbstractActionProcess(Process):
         """
         while not self._e_stop_process.is_set():
 
-            self._e_din_avail.wait()
+            in_data = self.input_queue.get()
 
-            self.process(
-                self._in_data,
-                self.out_data
+            out_data = self.process(
+                in_data
             )
 
-            self.e_dout_avail.set()
-            self.e_dout_avail.clear()
+            for queue in self.output_queues:
+                queue.put(out_data)
 
         self.clean_up()
 
     @abstractmethod
-    def process(self, data_in, data_out):
+    def process(self, data_in):
         """ This method should process the available data in data_in and put the result into
         data out. It has to be overwritten by any child class.
 
@@ -92,16 +93,14 @@ class DummyActionProcess(AbstractActionProcess):
     """Dummy module which only logs the current data.
     """
 
-    def __init__(self, manager, in_data=None, e_din_avail=None,):
+    def __init__(self, manager, output_queues):
         super().__init__(
             manager,
-            data_buffer_size=0,
-            in_data=in_data,
-            e_din_avail=e_din_avail)
+            output_queues=output_queues)
 
-    def process(self, data_in, data_out):
+    def process(self, data_in):
 
-        data = data_in.value
+        data = data_in
         if isinstance(data_in, ctypes.c_wchar_p):
             data = data_in.value
             self.logger().debug(f"Received data {data}")

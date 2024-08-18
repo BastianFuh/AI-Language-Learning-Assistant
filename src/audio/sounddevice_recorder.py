@@ -2,9 +2,9 @@
 """
 import logging
 import ctypes
+import torch
 
-from multiprocessing import Event
-from multiprocessing.sharedctypes import Array
+from torch.multiprocessing import Event
 
 import sounddevice as sd
 
@@ -14,7 +14,7 @@ class SoundDeviceRecorderModule:
     to other modules. New data availability is signaled through an event.
     """
 
-    def __init__(self, duration: int = 30, device=sd.default.device[0]):
+    def __init__(self, manager, model_device, output_queues=None, duration: int = 30, device=sd.default.device[0], ):
         """Constructor.
 
         Args:
@@ -26,11 +26,11 @@ class SoundDeviceRecorderModule:
 
         self.device_settings = sd.query_devices(device)
 
-        # Buffer used to share the audio data
-        self.audio_buffer = Array(ctypes.c_double, int(
-            self.device_settings["default_samplerate"] * duration))
-        # Event to signal the availability of data
-        self.e_audio_ready = Event()
+        self.output_queues = manager.list()
+        if output_queues is not None:
+            self.output_queues.extend(output_queues)
+
+        self.model_device = model_device
 
         self.logger.debug("Created Audio Stream with device %s", str(device))
         self._audio_input_stream = sd.InputStream(
@@ -48,12 +48,14 @@ class SoundDeviceRecorderModule:
         """
         self.logger.debug(
             "Created new dataset with length: %i ", int(len(indata)))
-        self.audio_buffer[:] = indata[:, 0]
+        #self.audio_buffer[:] = indata[:, 0]
+
+        shared_mem = torch.tensor(indata[:,0], dtype=torch.float16) #.to(self.model_device)
 
         # Event is set and cleared so that the current sleeping threads are awoken and next time
         # they reach wait again they block.
-        self.e_audio_ready.set()
-        self.e_audio_ready.clear()
+        for queue in self.output_queues:
+            queue.put(shared_mem)
 
     def halt(self) -> None:
         """ Immediately halt the current audio recording.
