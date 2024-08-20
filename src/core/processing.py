@@ -100,7 +100,7 @@ class LogActionProcess(AbstractActionProcess):
         super().__init__(manager, output_queues=output_queues)
 
     def process(self, data_in):
-        self.logger.debug(f"Received data {data_in}")
+        self.logger.info(f"Received data: {data_in} \n")
 
     def clean_up(self):
         pass
