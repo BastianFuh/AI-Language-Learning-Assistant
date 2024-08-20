@@ -1,6 +1,7 @@
 """Module containing the Audio recording logic with the sounddevice library."""
 
 import logging
+import numpy
 import torch
 
 import sounddevice as sd
@@ -36,29 +37,49 @@ class SoundDeviceRecorderModule:
 
         self.model_device = model_device
 
+        self._duration = duration
+        self.sampling_rate = self.device_settings["default_samplerate"]
+        self.buffer = numpy.ndarray(
+            int(self._duration * self.sampling_rate), dtype=numpy.float32
+        )
+        self._buffered_amount = 0
+        self._block_size = int(1 * self.sampling_rate)
+
         self.logger.debug("Created Audio Stream with device %s", str(device))
         self._audio_input_stream = sd.InputStream(
             callback=self._audio_callback,
             device=device,
             channels=1,
-            blocksize=int(duration * self.device_settings["default_samplerate"]),
-            samplerate=self.device_settings["default_samplerate"],
+            blocksize=int(1 * self.sampling_rate),
+            samplerate=self.sampling_rate,
         )
 
     # pylint: disable=unused-argument
     def _audio_callback(self, indata, frames, time, status):
         """Callback function for an audio InputStream."""
-        self.logger.debug("Created new dataset with length: %i ", int(len(indata)))
         # self.audio_buffer[:] = indata[:, 0]
 
-        shared_mem = torch.tensor(
-            indata[:, 0], dtype=torch.float16
-        )  # .to(self.model_device)
+        if self._buffered_amount < self._duration * self.sampling_rate:
+            self.logger.debug("Extended dataset with length: %i ", int(len(indata)))
+        else:
+            self.logger.debug("Send dataset with length: %i ", int(len(self.buffer)))
 
-        # Event is set and cleared so that the current sleeping threads are awoken and next time
-        # they reach wait again they block.
-        for queue in self.output_queues:
-            queue.put(shared_mem)
+            shared_mem = torch.tensor(
+                self.buffer, dtype=torch.float16
+            )  # .to(self.model_device)
+
+            # Event is set and cleared so that the current sleeping threads are awoken and next time
+            # they reach wait again they block.
+            for queue in self.output_queues:
+                queue.put(shared_mem)
+
+            self._buffered_amount = 0
+
+        self.buffer[
+            self._buffered_amount : self._buffered_amount + self._block_size
+        ] = indata[:, 0]
+
+        self._buffered_amount += self._block_size
 
     def halt(self) -> None:
         """Immediately halt the current audio recording."""

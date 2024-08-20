@@ -10,14 +10,12 @@ from core.processing import AbstractActionProcess
 class WhisperSpeechRecognitionModule(AbstractActionProcess):
     """Speech recognition using whisper model from openai."""
 
-    DEFAULT_DURATION = 30
+    # Duration of one segment. This should be longer than the processing
+    SEGMENT_DURATION = 10  # seconds
 
-    def __init__(self, manager, output_queues=(), duration=DEFAULT_DURATION):
-        self.__class__.duration = duration
-
-        self.duration = 30
+    def __init__(self, manager, input_fs, output_queues=()):
         self._target_fs = 16000
-
+        self.input_fs = input_fs
         self.model = None
 
         self.last_text = ""
@@ -35,15 +33,21 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         data_in.to(self.model.device)
 
         start_time = time.time()
-        data = data_in  # np.array(data_in, dtype=np.float32)
+        data = data_in
         data_conversion_time = time.time()
 
-        resampled_audio = scipy.signal.resample(data, self.duration * self._target_fs)
+        # Calculate the duration based on sampling rate and length of data
+        duration = int(len(data_in) / self.input_fs)
+
+        # Resample audio to the correct input sampling rate
+        resampled_audio = scipy.signal.resample(data, duration * self._target_fs)
         resampling_time = time.time()
 
+        # Trim or pad the data to 30s
         pad_or_trim_audio = whisper.pad_or_trim(resampled_audio)
         pad_or_trim_time = time.time()
 
+        # Calculate the mel spectrogram
         mel = whisper.log_mel_spectrogram(pad_or_trim_audio).to(self.model.device)
         mel_calc_time = time.time()
 
@@ -52,8 +56,11 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
             fp16=True
         )
 
+        # Do the actual inteference
         result = whisper.decode(self.model, mel, options)
         end_time = time.time()
+
+        # Debut time outputs
         self.logger.debug(f"Time conversion {data_conversion_time - start_time}")
         self.logger.debug(
             f"Resampling conversion {resampling_time - data_conversion_time}"
