@@ -2,11 +2,11 @@
 
 import logging
 
-import ctypes
-
 from abc import abstractmethod
-
 from multiprocessing.managers import SyncManager
+
+import torch
+
 from torch.multiprocessing import Process
 
 
@@ -29,6 +29,17 @@ class AbstractActionProcess(Process):
 
         # Initiliase the process
         Process.__init__(self, args=args, kwargs=kwargs)
+
+    @staticmethod
+    def get_process_device():
+        """Return the fastest available device."""
+        return (
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
 
     def add_output_queue(self, queue):
         """Adds a module which will receive the output of this module."""
@@ -68,16 +79,18 @@ class AbstractActionProcess(Process):
         """Cleans up the thread when it is killed."""
 
     def kill(self):
-        self.logger().info("Send kill signal to process")
+        self.logger.info("Send kill signal to process")
         self._e_stop_process.set()
 
-    @classmethod
-    def logger(cls):
+    @property
+    def logger(self):
         """Return the logger for the class."""
-        if cls._logger is None:
-            cls._logger = logging.getLogger(cls.__name__)
+        # pylint: disable=protected-access
+        if self.__class__._logger is None:
+            self.__class__._logger = logging.getLogger(self.__class__.__name__)
 
-        return cls._logger
+        return self.__class__._logger
+        # pylint: enable=protected-access
 
 
 class LogActionProcess(AbstractActionProcess):
@@ -87,7 +100,7 @@ class LogActionProcess(AbstractActionProcess):
         super().__init__(manager, output_queues=output_queues)
 
     def process(self, data_in):
-        self.logger().debug(f"Received data {data_in}")
+        self.logger.debug(f"Received data {data_in}")
 
     def clean_up(self):
         pass
