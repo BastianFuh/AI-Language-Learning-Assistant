@@ -63,10 +63,10 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         )
         self.logger.debug(f"Mel calc conversion {mel_calc_time - pad_or_trim_time}")
         self.logger.debug(f"Decode conversion {end_time - mel_calc_time}")
-        self.logger.info(
+        self.logger.debug(
             f"Detected language {result.language} in {end_time - start_time}"
         )
-        self.logger.info(f"Detected Text: {result.text}")
+        self.logger.debug(f"Detected Text: {result.text}")
 
         self.last_text = result.text
         return result.text
