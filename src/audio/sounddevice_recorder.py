@@ -68,8 +68,6 @@ class SoundDeviceRecorderModule:
                 self.buffer, dtype=torch.float16
             )  # .to(self.model_device)
 
-            # Event is set and cleared so that the current sleeping threads are awoken and next time
-            # they reach wait again they block.
             for queue in self.output_queues:
                 queue.put(shared_mem)
 
@@ -82,9 +80,18 @@ class SoundDeviceRecorderModule:
         self._buffered_amount += self._block_size
 
     def halt(self) -> None:
-        """Immediately halt the current audio recording."""
+        """Stop the current audio recording and send the buffer to the following modules."""
         self.logger.info("Halted audio recording")
-        self._audio_input_stream.abort()
+        self._audio_input_stream.stop()
+
+        shared_mem = torch.tensor(
+            self.buffer[: self._buffered_amount], dtype=torch.float16
+        )
+
+        for queue in self.output_queues:
+            queue.put(shared_mem)
+
+        self._buffered_amount = 0
 
     def start(self) -> None:
         """Start the audio recording."""
