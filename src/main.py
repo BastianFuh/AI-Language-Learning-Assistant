@@ -8,10 +8,10 @@ import multiprocessing as mp
 from core.processing import LogActionProcess
 from audio.sounddevice_recorder import SoundDeviceRecorderModule
 from audio.whisper_speech_recognition import WhisperSpeechRecognitionModule
-from text.gemma import GemmaTextProcessingModule
+from text.gpt4o_mini import GPT4oMiniTextProcessingModule
 
 
-logging.basicConfig(level="DEBUG")
+logging.basicConfig(level="INFO")
 
 if __name__ == "__main__":
     manager = mp.Manager()
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         manager, soundDevice.sampling_rate
     )
 
-    text_processing = GemmaTextProcessingModule(manager)
+    text_processing = GPT4oMiniTextProcessingModule(manager)
 
     processing_1 = LogActionProcess(manager, None)
 
