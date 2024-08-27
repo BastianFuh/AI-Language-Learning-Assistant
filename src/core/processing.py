@@ -59,8 +59,9 @@ class AbstractActionProcess(Process):
 
             out_data = self.process(in_data)
 
-            for queue in self.output_queues:
-                queue.put(out_data)
+            if out_data is not None:
+                for queue in self.output_queues:
+                    queue.put(out_data)
 
         self.clean_up()
 
