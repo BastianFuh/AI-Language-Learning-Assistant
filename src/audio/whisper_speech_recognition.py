@@ -13,12 +13,14 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
     # Duration of one segment. This should be longer than the processing
     SEGMENT_DURATION = 10  # seconds
 
-    def __init__(self, manager, input_fs, output_queues=()):
+    def __init__(self, manager, input_fs, output_queues=(), target_language="en"):
         self._target_fs = 16000
         self.input_fs = input_fs
         self.model = None
 
         self.last_text = ""
+
+        self.target_language = target_language
 
         super().__init__(manager, output_queues=output_queues)
 
@@ -75,8 +77,11 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         )
         self.logger.debug(f"Detected Text: {result.text}")
 
-        self.last_text = result.text
-        return result.text
+        if result.language is self.target_language:
+            self.last_text = result.text
+            return result.text
+        else:
+            return None
 
     def clean_up(self):
         del self.model
