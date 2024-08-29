@@ -18,8 +18,6 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         self.input_fs = input_fs
         self.model = None
 
-        self.last_text = ""
-
         self.target_language = target_language
 
         super().__init__(manager, output_queues=output_queues)
@@ -53,10 +51,7 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         mel = whisper.log_mel_spectrogram(pad_or_trim_audio).to(self.model.device)
         mel_calc_time = time.time()
 
-        options = whisper.DecodingOptions(
-            # prompt=self.last_text,
-            fp16=True
-        )
+        options = whisper.DecodingOptions(fp16=True)
 
         # Do the actual inteference
         result = whisper.decode(self.model, mel, options)
@@ -77,10 +72,14 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         )
         self.logger.debug(f"Detected Text: {result.text}")
 
-        if result.language is self.target_language:
-            self.last_text = result.text
+        if result.language == self.target_language:
+            self.logger.debug("Send Data")
+
             return result.text
         else:
+            self.logger.debug(
+                f"Dropped Data. Detection {result.language} vs Target {self.target_language}"
+            )
             return None
 
     def clean_up(self):

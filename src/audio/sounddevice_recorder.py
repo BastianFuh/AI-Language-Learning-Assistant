@@ -46,13 +46,8 @@ class SoundDeviceRecorderModule:
         self._block_size = int(1 * self.sampling_rate)
 
         self.logger.debug("Created Audio Stream with device %s", str(device))
-        self._audio_input_stream = sd.InputStream(
-            callback=self._audio_callback,
-            device=device,
-            channels=1,
-            blocksize=int(1 * self.sampling_rate),
-            samplerate=self.sampling_rate,
-        )
+        self.device = device
+        self._audio_input_stream = None
 
     # pylint: disable=unused-argument
     def _audio_callback(self, indata, frames, time, status):
@@ -83,6 +78,7 @@ class SoundDeviceRecorderModule:
         """Stop the current audio recording and send the buffer to the following modules."""
         self.logger.info("Halted audio recording")
         self._audio_input_stream.stop()
+        self._audio_input_stream = None
 
         shared_mem = torch.tensor(
             self.buffer[: self._buffered_amount], dtype=torch.float16
@@ -95,9 +91,24 @@ class SoundDeviceRecorderModule:
 
     def start(self) -> None:
         """Start the audio recording."""
+
+        if self.is_active():
+            return
+
         self.logger.info("Started audio recording")
+
+        self._audio_input_stream = sd.InputStream(
+            callback=self._audio_callback,
+            device=self.device,
+            channels=1,
+            blocksize=int(1 * self.sampling_rate),
+            samplerate=self.sampling_rate,
+        )
         self._audio_input_stream.start()
 
     def is_active(self) -> bool:
         """Is the audio currently being recorded."""
-        return self._audio_input_stream.active
+        if self._audio_input_stream is not None:
+            return self._audio_input_stream.active
+        else:
+            return False
