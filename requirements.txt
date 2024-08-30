@@ -1,0 +1,16 @@
+coqui_tts==0.24.1
+numpy==1.26.4
+openai==1.43.0
+openai_whisper==20231117
+PyAudio==0.2.14
+pygame==2.6.0
+pynput==1.7.7
+scipy==1.14.1
+sounddevice==0.4.7
+transformers==4.40.2
+coqui-tts==0.24.1
+gTTS==2.5.3
+cutlet==0.4.0
+fugashi[unidic-lite]
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch==2.4.0+cu124
