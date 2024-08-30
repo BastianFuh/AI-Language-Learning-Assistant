@@ -1,20 +1,20 @@
 """Main module."""
 
 import logging
+import multiprocessing as mp
 import os
 import queue
 
 from pynput import keyboard
 
-import multiprocessing as mp
-
-from core.processing import LogActionProcess
+from audio.gtts import gTTSModule
 from audio.sounddevice_recorder import SoundDeviceRecorderModule
 from audio.whisper_speech_recognition import WhisperSpeechRecognitionModule
+from audio.xtts_v2 import xTTSV2Module
+from core.processing import LogActionProcess
 from text.gpt4o_mini import GPT4oMiniTextProcessingModule
 
-
-logging.basicConfig(level="DEBUG")
+logging.basicConfig(level="INFO")
 
 key_queue = queue.Queue()
 
@@ -41,6 +41,7 @@ STOP_SOUND_KEY_COMBINATION = {
 }
 
 STOP_APPLICATION = {
+    keyboard.Key.alt,
     keyboard.Key.ctrl,
     keyboard.KeyCode.from_char("c"),
 }
@@ -54,7 +55,7 @@ if __name__ == "__main__":
             manager,
             WhisperSpeechRecognitionModule.get_process_device(),
             duration=WhisperSpeechRecognitionModule.SEGMENT_DURATION,
-            device=os.environ["DEFAULT_SOUNDDEVICE"],
+            device="Mikrofon (NVIDIA Broadcast), Windows WASAPI",
         )
     else:
         soundDevice = SoundDeviceRecorderModule(
@@ -71,20 +72,24 @@ if __name__ == "__main__":
 
     processing_1 = LogActionProcess(manager, None)
 
+    audio_out = xTTSV2Module(manager)
+
     soundDevice.output_queues.append(speechRecognition.input_queue)
 
-    speechRecognition.connect_module(processing_1)
-    speechRecognition.connect_module(text_processing)
+    speechRecognition.connect_output_to(processing_1)
+    speechRecognition.connect_output_to(text_processing)
 
-    text_processing.connect_module(processing_1)
+    text_processing.connect_output_to(processing_1)
+    text_processing.connect_output_to(audio_out)
 
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
 
+    # soundDevice.start()
     speechRecognition.start()
-    soundDevice.start()
     processing_1.start()
     text_processing.start()
+    audio_out.start()
 
     pressend_keys = set()
 
