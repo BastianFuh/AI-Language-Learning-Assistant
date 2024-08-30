@@ -45,7 +45,7 @@ class AbstractActionProcess(Process):
         """Adds a module which will receive the output of this module."""
         self.output_queues.append(queue)
 
-    def connect_module(self, module):
+    def connect_output_to(self, module):
         """Connects the input of the given module to the output of this module."""
         self.output_queues.append(module.input_queue)
 
@@ -64,6 +64,10 @@ class AbstractActionProcess(Process):
                     queue.put(out_data)
 
         self.clean_up()
+
+    def data_available(self):
+        """Return true if data is available for processing."""
+        return self.input_queue.not_empty
 
     @abstractmethod
     def process(self, data_in):
