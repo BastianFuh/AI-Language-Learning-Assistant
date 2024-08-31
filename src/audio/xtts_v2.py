@@ -9,7 +9,7 @@ from core.processing import AbstractActionProcess
 import random
 
 
-class xTTSV2Module(AbstractActionProcess):
+class XTTSV2Module(AbstractActionProcess):
     """Module to convert text to speech using xTTS v2.
     See https://huggingface.co/coqui/XTTS-v2.
 
@@ -18,11 +18,7 @@ class xTTSV2Module(AbstractActionProcess):
     """
 
     def __init__(self, manager, output_queues=(), language="en"):
-        """This modules uses google text to speech API to convert the given text to speech.
-
-        Args:
-            language (str, optional): Language of the TTS. Defaults to "en".
-        """
+        """This modules uses google text to speech API to convert the given text to speech."""
         self.language = language
 
         self.module = None

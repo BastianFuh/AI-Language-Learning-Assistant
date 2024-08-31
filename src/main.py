@@ -7,9 +7,10 @@ import queue
 
 from pynput import keyboard
 
+from audio.openai_tts import OpenAITTS
 from audio.sounddevice_recorder import SoundDeviceRecorderModule
 from audio.whisper_speech_recognition import WhisperSpeechRecognitionModule
-from audio.xtts_v2 import xTTSV2Module
+from audio.xtts_v2 import XTTSV2Module
 from core.processing import LogActionProcess
 from text.gpt4o_mini import GPT4oMiniTextProcessingModule
 
@@ -71,7 +72,7 @@ if __name__ == "__main__":
 
     processing_1 = LogActionProcess(manager, None)
 
-    audio_out = xTTSV2Module(manager)
+    audio_out = OpenAITTS(manager)
 
     soundDevice.output_queues.append(speechRecognition.input_queue)
 
