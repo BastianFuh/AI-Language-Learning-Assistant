@@ -41,7 +41,7 @@ class PhiMiniTextProcessingModule(AbstractActionProcess):
         super().run(*args, **kwargs)
 
     def process(self, data_in):
-        self.message_log.append({"role": "user", "content": data_in})
+        self.message_log.append({"role": "user", "content": data_in["data"]})
 
         # Process the current message log
         output = self.model(self.message_log, max_new_tokens=500)
@@ -53,7 +53,9 @@ class PhiMiniTextProcessingModule(AbstractActionProcess):
         self.logger.debug(f"Current message log post processing : {self.message_log}")
 
         # Retrive the last added text element
-        return output[0]["generated_text"][-1]["content"].strip()
+        return self.create_output_data(
+            output[0]["generated_text"][-1]["content"].strip()
+        )
 
     def clean_up(self):
         del self.model

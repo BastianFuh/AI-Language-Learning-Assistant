@@ -7,7 +7,6 @@ import queue
 
 from pynput import keyboard
 
-from audio.gtts import gTTSModule
 from audio.sounddevice_recorder import SoundDeviceRecorderModule
 from audio.whisper_speech_recognition import WhisperSpeechRecognitionModule
 from audio.xtts_v2 import xTTSV2Module
@@ -55,7 +54,7 @@ if __name__ == "__main__":
             manager,
             WhisperSpeechRecognitionModule.get_process_device(),
             duration=WhisperSpeechRecognitionModule.SEGMENT_DURATION,
-            device="Mikrofon (NVIDIA Broadcast), Windows WASAPI",
+            device=os.environ["DEFAULT_SOUNDDEVICE"],
         )
     else:
         soundDevice = SoundDeviceRecorderModule(

@@ -25,14 +25,13 @@ class gTTSModule(AbstractActionProcess):
 
         # self.logger.info(f"Received Data {data_in}")
 
-        audio = gTTS(data_in)
+        audio = gTTS(data_in["data"])
 
         mp3_fp = BytesIO()
         audio.write_to_fp(mp3_fp)
 
         mp3_fp.seek(0)
 
-        mixer.init(132300)
         mixer.music.load(mp3_fp)
 
         mixer.music.play()
@@ -45,7 +44,6 @@ class gTTSModule(AbstractActionProcess):
 
     def run(self, *args, **kwargs):
         # Initialiaze the audio mixer
-        mixer.init(132300)
 
         super().run(*args, **kwargs)
 

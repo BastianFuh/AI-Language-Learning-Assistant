@@ -1,10 +1,12 @@
 """Module to convert text to speech using xTTS v2."""
 
 import sounddevice as sd
-from pygame import mixer
 from TTS.api import TTS
 
 from core.processing import AbstractActionProcess
+
+
+import random
 
 
 class xTTSV2Module(AbstractActionProcess):
@@ -30,7 +32,12 @@ class xTTSV2Module(AbstractActionProcess):
 
     def process(self, data_in):
         audio = self.module.tts(
-            data_in, speaker=self.speakers, language=self.language, speed=2
+            data_in["data"],
+            speaker=self.module.speakers[
+                random.randint(0, len(self.module.speakers) - 1)
+            ],
+            language=data_in["language"],
+            speed=2,
         )
 
         sd.play(audio, samplerate=int(24e3))
@@ -48,5 +55,5 @@ class xTTSV2Module(AbstractActionProcess):
         super().run(*args, **kwargs)
 
     def clean_up(self):
-        mixer.quit()
+        del self.module
         return super().clean_up()

@@ -13,12 +13,7 @@ class GPT4oMiniTextProcessingModule(AbstractActionProcess):
 
     DEFAULT_MODEL_NAME = "gpt-4o-mini"
 
-    SYSTEM_PROMPT = """
-        You are now a translator. 
-        You will get a text and translate it.
-        You will be translating the text from english to german.
-        ONLY translate the text of the most recent user message.
-        DO NOT return anything other than the translated text.
+    SYSTEM_PROMPT = """ Keep yourself short.
     """
 
     def __init__(self, manager, output_queues=(), model_name=DEFAULT_MODEL_NAME):
@@ -35,13 +30,13 @@ class GPT4oMiniTextProcessingModule(AbstractActionProcess):
         super().run(*args, **kwargs)
 
     def process(self, data_in):
-        self.message_log.append({"role": "user", "content": data_in})
+        self.message_log.append({"role": "user", "content": data_in["data"]})
 
         output = self.client.chat.completions.create(
             model=self.model, messages=self.message_log
         )
 
-        return output.choices[0].message.content
+        return self.create_output_data(output.choices[0].message.content)
 
     def clean_up(self):
         del self.client

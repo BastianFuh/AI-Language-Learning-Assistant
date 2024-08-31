@@ -84,8 +84,11 @@ class SoundDeviceRecorderModule:
             self.buffer[: self._buffered_amount], dtype=torch.float16
         )
 
+        output = dict()
+        output["data"] = shared_mem
+
         for queue in self.output_queues:
-            queue.put(shared_mem)
+            queue.put(output)
 
         self._buffered_amount = 0
 
