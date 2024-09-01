@@ -10,7 +10,6 @@ from pynput import keyboard
 from audio.openai_tts import OpenAITTS
 from audio.sounddevice_recorder import SoundDeviceRecorderModule
 from audio.whisper_speech_recognition import WhisperSpeechRecognitionModule
-from audio.xtts_v2 import XTTSV2Module
 from core.processing import LogActionProcess
 from text.gpt4o_mini import GPT4oMiniTextProcessingModule
 
@@ -50,12 +49,14 @@ STOP_APPLICATION = {
 if __name__ == "__main__":
     manager = mp.Manager()
 
-    if "DEFAULT_SOUNDDEVICE" in os.environ.keys():
+    default_soundevice_input = os.environ.get("DEFAULT_SOUNDDEVICE", None)
+
+    if default_soundevice_input is not None:
         soundDevice = SoundDeviceRecorderModule(
             manager,
             WhisperSpeechRecognitionModule.get_process_device(),
             duration=WhisperSpeechRecognitionModule.SEGMENT_DURATION,
-            device=os.environ["DEFAULT_SOUNDDEVICE"],
+            device=default_soundevice_input,
         )
     else:
         soundDevice = SoundDeviceRecorderModule(
