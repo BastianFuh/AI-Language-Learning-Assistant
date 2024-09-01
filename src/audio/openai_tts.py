@@ -1,8 +1,11 @@
 """Module for OpenAi TTS"""
 
+import os
 import random
 import numpy as np
 from openai import OpenAI
+import scipy
+import scipy.signal
 import sounddevice as sd
 
 from core.processing import AbstractActionProcess
@@ -13,9 +16,12 @@ class OpenAITTS(AbstractActionProcess):
     See https://platform.openai.com/docs/guides/text-to-speech
     """
 
-    def __init__(self, manager, output_queues=()):
+    def __init__(self, manager, output_queues=(), audio_output_device=None):
         """This modules uses Open Ai text to speech API to convert the given text to speech."""
         self.client = None
+
+        self.audio_output_device = audio_output_device
+        self.output_sampling_rate = None
 
         # Model, options are "tts-1" and "tts-1-hd" for higher quality and cost
         self.model = "tts-1"
@@ -43,8 +49,15 @@ class OpenAITTS(AbstractActionProcess):
         # Adjust the values to bring them into a range of -1 to 1
         normalized_audio = converted_audio / 2**15
 
+        resample_scale = self.output_sampling_rate / 24e3
+
+        # Resample audio to sample rate of the audio output device
+        resampled_audio = scipy.signal.resample_poly(
+            normalized_audio, resample_scale * 4, 4
+        )
+
         # Play audio
-        sd.play(normalized_audio, samplerate=int(24e3))
+        sd.play(resampled_audio)
 
         sd.wait()
 
@@ -52,6 +65,11 @@ class OpenAITTS(AbstractActionProcess):
 
     def run(self, *args, **kwargs):
         self.client = OpenAI()
+        self.audio_output_device = os.environ.get("DEFAULT_AUDIODEVICE_OUTPUT", None)
+        sd.default.device = self.audio_output_device
+        self.output_sampling_rate = sd.query_devices(self.audio_output_device)[
+            "default_samplingrate"
+        ]
         super().run(*args, **kwargs)
 
     def clean_up(self):
