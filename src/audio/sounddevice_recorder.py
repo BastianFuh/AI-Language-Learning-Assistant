@@ -25,7 +25,7 @@ class SoundDeviceRecorderModule:
         Args:
             duration (int, optional): The length of each recorded data block in
                                         seconds. Defaults to 30.
-            device (int or str, optional): _description_. Defaults to sounddevice.default.device[0].
+            device (int or str, optional): Defaults to sounddevice.default.device[0].
         """
         self.logger = logging.getLogger(self.__class__.__name__)
 
