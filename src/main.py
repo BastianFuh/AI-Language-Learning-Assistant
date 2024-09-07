@@ -5,12 +5,15 @@ import multiprocessing as mp
 import os
 import queue
 
+from anyio import Path
 from pynput import keyboard
+import requests
 
 from audio.openai_tts import OpenAITTS
 from audio.sounddevice_recorder import SoundDeviceRecorderModule
 from audio.whisper_speech_recognition import WhisperSpeechRecognitionModule
 from core.processing import LogActionProcess
+from gui.eel_gui import EelGuiModule
 from text.gpt4o_mini import GPT4oMiniTextProcessingModule
 
 logging.basicConfig(level="INFO")
@@ -47,6 +50,9 @@ STOP_APPLICATION = {
 
 
 if __name__ == "__main__":
+    if not Path("/css/bootstrap/bootstrap.min.css").exists():
+        requests.get()
+
     manager = mp.Manager()
 
     default_soundevice_input = os.environ.get("DEFAULT_SOUNDDEVICE", None)
@@ -75,18 +81,23 @@ if __name__ == "__main__":
 
     audio_out = OpenAITTS(manager)
 
+    gui = EelGuiModule(manager)
+
     soundDevice.output_queues.append(speechRecognition.input_queue)
 
     speechRecognition.connect_output_to(processing_1)
     speechRecognition.connect_output_to(text_processing)
+    speechRecognition.connect_output_to(gui)
 
     text_processing.connect_output_to(processing_1)
     text_processing.connect_output_to(audio_out)
+    text_processing.connect_output_to(gui)
 
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
 
     # soundDevice.start()
+    gui.start()
     speechRecognition.start()
     processing_1.start()
     text_processing.start()

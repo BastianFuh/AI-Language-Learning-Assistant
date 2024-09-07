@@ -67,8 +67,9 @@ class OpenAITTS(AbstractActionProcess):
         self.client = OpenAI()
         self.audio_output_device = os.environ.get("DEFAULT_AUDIODEVICE_OUTPUT", None)
         sd.default.device = self.audio_output_device
+        print(sd.query_devices(self.audio_output_device))
         self.output_sampling_rate = sd.query_devices(self.audio_output_device)[
-            "default_samplingrate"
+            "default_samplerate"
         ]
         super().run(*args, **kwargs)
 
