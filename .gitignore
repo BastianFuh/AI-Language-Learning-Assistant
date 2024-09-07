@@ -1,1 +1,5 @@
 __pycache__
+resources/web_folder/css/bootstrap/*.css
+resources/web_folder/css/bootstrap/*.map
+resources/web_folder/js/bootstrap/*.js
+resources/web_folder/js/bootstrap/*.map
