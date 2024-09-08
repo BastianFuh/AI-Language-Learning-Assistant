@@ -5,6 +5,22 @@ from multiprocessing.managers import SyncManager
 import eel
 from core.processing import AbstractActionProcess
 
+_local_input_queue = None
+
+
+def _set_queue(queue):
+    global _local_input_queue
+    _local_input_queue = queue
+
+
+@eel.expose
+def process_frontend_text(data):
+    """Function to process data from the frontend."""
+    print(data)
+    output_data = {"data": data, "source": "frontend"}
+
+    _local_input_queue.put(output_data)
+
 
 class EelGuiModule(AbstractActionProcess):
     """Graphical user interface using eel."""
@@ -13,14 +29,20 @@ class EelGuiModule(AbstractActionProcess):
         super().__init__(manager, *args, output_queues=output_queues, **kwargs)
 
     def run(self, *args, **kwargs):
+        _set_queue(self.input_queue)
+
         eel.init("resources/web_folder")
         eel.start("main.html", block=False)
 
         super().run(*args, **kwargs)
 
-    def process(self, data_in):
+    def process(self, data_in: dict):
         self.logger.info("Test")
         eel.update(data_in)
+
+        if "source" in data_in.keys():
+            if data_in["source"] == "frontend":
+                return data_in["data"]
 
         return None
 
