@@ -16,12 +16,12 @@ function update(data) {
 
     // Default lable and alignment
     label = `User (${data["source"]})`
-    text_alignment = "align-self-end"
+    text_alignment = "align-self-end me-3"
 
     // 
     if (data["source"] === "llm") {
         label = `System (${data["source"]})`
-        text_alignment = "align-self-start"
+        text_alignment = "align-self-start ms-3"
     }
 
 
