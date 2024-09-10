@@ -14,10 +14,21 @@ function update(data) {
 
     console.log(text)
 
+    // Default lable and alignment
+    label = `User (${data["source"]})`
+    text_alignment = "align-self-end"
+
+    // 
+    if (data["source"] === "llm") {
+        label = `System (${data["source"]})`
+        text_alignment = "align-self-start"
+    }
+
+
     html = `
-<div id="card" class="card p-3 align-self-start  mt-4 w-50 bg-secondary text-light fs-5">
+<div id="card" class="card p-3 ${text_alignment} mt-4 w-50 bg-secondary text-light fs-5">
     <div class="fs-4 fw-bold card-title">
-        Test
+        ${label}
     </div>
     <div class="card-body">
         <p>
@@ -28,7 +39,12 @@ function update(data) {
 
 `
 
-    window.document.getElementById("text-container").innerHTML += html
+    text_container = window.document.getElementById("text-container")
+
+    text_container.innerHTML += html
+    text_container.scrollTo(0, text_container.scrollHeight)
+
+
 }
 
 

@@ -32,7 +32,7 @@ class EelGuiModule(AbstractActionProcess):
         _set_queue(self.input_queue)
 
         eel.init("resources/web_folder")
-        eel.start("main.html", block=False)
+        eel.start("main.html", block=False, size=(1000, 1000))
 
         super().run(*args, **kwargs)
 

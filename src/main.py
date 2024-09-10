@@ -50,8 +50,8 @@ STOP_APPLICATION = {
 
 
 if __name__ == "__main__":
-    if not Path("/css/bootstrap/bootstrap.min.css").exists():
-        requests.get()
+    # if not Path("/css/bootstrap/bootstrap.min.css").exists():
+    # requests.get()
 
     manager = mp.Manager()
 
