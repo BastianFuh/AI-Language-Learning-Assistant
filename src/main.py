@@ -93,6 +93,8 @@ if __name__ == "__main__":
     text_processing.connect_output_to(audio_out)
     text_processing.connect_output_to(gui)
 
+    gui.connect_output_to(text_processing)
+
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
 

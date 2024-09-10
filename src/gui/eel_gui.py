@@ -37,12 +37,7 @@ class EelGuiModule(AbstractActionProcess):
         super().run(*args, **kwargs)
 
     def process(self, data_in: dict):
-        self.logger.info("Test")
         eel.update(data_in)
-
-        if "source" in data_in.keys():
-            if data_in["source"] == "frontend":
-                return data_in["data"]
 
         return None
 
@@ -59,3 +54,17 @@ class EelGuiModule(AbstractActionProcess):
 
                 # Process the data
                 self.process(in_data)
+
+                if "source" in in_data.keys():
+                    if in_data["source"] == "frontend":
+                        out_data = self.create_output_data(
+                            in_data["data"], language="en"
+                        )
+
+                        # Update the output data set with the metadata contained inside the input
+                        in_data.pop("data", None)
+                        out_data.update(in_data)
+                        out_data["source"] = self.label
+
+                        for queue in self.output_queues:
+                            queue.put(out_data)

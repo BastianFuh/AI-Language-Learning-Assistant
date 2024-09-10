@@ -49,9 +49,11 @@ function update(data) {
 
 
 function send_text_to_backend() {
-    text = document.getElementById("text-input").value
+    text_input = document.getElementById("text-input")
+    text = text_input.value
     console.log("Send text")
     eel.process_frontend_text(text)
+    text_input.value = ""
 }
 
 
