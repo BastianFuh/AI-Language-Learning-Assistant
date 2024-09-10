@@ -49,9 +49,9 @@ class OpenAITTS(AbstractActionProcess):
         # Adjust the values to bring them into a range of -1 to 1
         normalized_audio = converted_audio / 2**15
 
+        # Resample audio to sample rate of the audio output device
         resample_scale = self.output_sampling_rate / 24e3
 
-        # Resample audio to sample rate of the audio output device
         resampled_audio = scipy.signal.resample_poly(
             normalized_audio, resample_scale * 4, 4
         )
