@@ -29,7 +29,7 @@ class OpenAITTS(AbstractActionProcess):
         self.voices = ["alloy", "echo", "fable", "nova", "onyx", "shimmer"]
         # Response format of the audio
         self.response_format = "pcm"
-        super().__init__(manager, output_queues=output_queues)
+        super().__init__(manager, "tts", output_queues=output_queues)
 
     def process(self, data_in):
         # Use

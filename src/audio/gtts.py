@@ -18,7 +18,7 @@ class gTTSModule(AbstractActionProcess):
         """
         self.language = language
         self.accent = accent
-        super().__init__(manager, output_queues=output_queues)
+        super().__init__(manager, "tts", output_queues=output_queues)
 
     def process(self, data_in):
         #

@@ -4,6 +4,7 @@ import logging
 
 from abc import abstractmethod
 from multiprocessing.managers import SyncManager
+from typing import Literal
 
 import torch
 
@@ -18,10 +19,19 @@ class AbstractActionProcess(Process):
 
     _logger = None
 
-    def __init__(self, manager: SyncManager, *args, output_queues=None, **kwargs):
+    def __init__(
+        self,
+        manager: SyncManager,
+        label: Literal["stt", "tts", "llm", "gui", "other"],
+        *args,
+        output_queues=None,
+        **kwargs,
+    ):
         self._e_stop_process = manager.Event()
 
         self.input_queue = manager.Queue()
+
+        self.label = label
 
         self.output_queues = manager.list()
         if output_queues is not None:
@@ -65,6 +75,7 @@ class AbstractActionProcess(Process):
                 # Update the output data set with the metadata contained inside the input
                 in_data.pop("data", None)
                 out_data.update(in_data)
+                out_data["source"] = self.label
 
                 for queue in self.output_queues:
                     queue.put(out_data)
@@ -127,7 +138,7 @@ class LogActionProcess(AbstractActionProcess):
     """Dummy module which only logs the current data."""
 
     def __init__(self, manager, output_queues):
-        super().__init__(manager, output_queues=output_queues)
+        super().__init__(manager, "other", output_queues=output_queues)
 
     def process(self, data_in):
         self.logger.info(f"Received data: {data_in} \n")

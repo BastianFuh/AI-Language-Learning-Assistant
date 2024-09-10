@@ -24,7 +24,7 @@ class XTTSV2Module(AbstractActionProcess):
         self.module = None
         self.speakers = None
 
-        super().__init__(manager, output_queues=output_queues)
+        super().__init__(manager, "tts", output_queues=output_queues)
 
     def process(self, data_in):
         audio = self.module.tts(

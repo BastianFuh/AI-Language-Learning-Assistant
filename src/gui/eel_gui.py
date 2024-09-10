@@ -26,7 +26,7 @@ class EelGuiModule(AbstractActionProcess):
     """Graphical user interface using eel."""
 
     def __init__(self, manager: SyncManager, *args, output_queues=None, **kwargs):
-        super().__init__(manager, *args, output_queues=output_queues, **kwargs)
+        super().__init__(manager, "gui", *args, output_queues=output_queues, **kwargs)
 
     def run(self, *args, **kwargs):
         _set_queue(self.input_queue)

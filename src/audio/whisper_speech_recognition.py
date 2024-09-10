@@ -22,7 +22,7 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
 
         self.target_languages = target_languages
 
-        super().__init__(manager, output_queues=output_queues)
+        super().__init__(manager, "stt", output_queues=output_queues)
 
     def run(self, *args, **kwargs):
         self.model = whisper.load_model("base", self.get_process_device())
@@ -30,7 +30,7 @@ class WhisperSpeechRecognitionModule(AbstractActionProcess):
         super().run(*args, **kwargs)
 
     def process(self, data_in):
-        self.logger.debug("Started Processing")
+        self.logger.debug("Started Audio Processing")
 
         start_time = time.time()
         data = data_in["data"]

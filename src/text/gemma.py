@@ -30,7 +30,7 @@ class GemmaTextProcessingModule(AbstractActionProcess):
         # System role is not supported by gemma
         self.message_log = [{"role": "user", "content": self.SYSTEM_PROMPT}]
 
-        super().__init__(manager, output_queues=output_queues)
+        super().__init__(manager, "llm", output_queues=output_queues)
 
     def run(self, *args, **kwargs):
         self.model = pipeline(

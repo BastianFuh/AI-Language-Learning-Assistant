@@ -29,7 +29,7 @@ class PhiMiniTextProcessingModule(AbstractActionProcess):
 
         self.message_log = [{"role": "system", "content": self.SYSTEM_PROMPT}]
 
-        super().__init__(manager, output_queues=output_queues)
+        super().__init__(manager, "llm", output_queues=output_queues)
 
     def run(self, *args, **kwargs):
         self.model = pipeline(
