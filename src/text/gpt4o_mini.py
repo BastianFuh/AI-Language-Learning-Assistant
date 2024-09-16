@@ -24,19 +24,25 @@ class GPT4oMiniTextProcessingModule(AbstractActionProcess):
 
         super().__init__(manager, "llm", output_queues=output_queues)
 
-    def run(self, *args, **kwargs):
+    def run(self, *args, **kwargs) -> None:
         self.client = OpenAI()
 
         super().run(*args, **kwargs)
 
-    def process(self, data_in):
+    def process(self, data_in: dict) -> dict:
         self.message_log.append({"role": "user", "content": data_in["data"]})
 
-        output = self.client.chat.completions.create(
-            model=self.model, messages=self.message_log
+        output = (
+            self.client.chat.completions.create(
+                model=self.model, messages=self.message_log
+            )
+            .choices[0]
+            .message.content
         )
 
-        return self.create_output_data(output.choices[0].message.content)
+        self.message_log.append({"role": "system", "content": output})
 
-    def clean_up(self):
+        return self.create_output_data(output)
+
+    def clean_up(self) -> None:
         del self.client
