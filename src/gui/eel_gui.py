@@ -1,42 +1,40 @@
 """Module for graphical user interface using eel."""
 
+from multiprocessing import Queue
 from multiprocessing.managers import SyncManager
+from typing import Iterable
 
 import eel
 from core.processing import AbstractActionProcess
-
-_local_input_queue = None
-
-
-def _set_queue(queue):
-    global _local_input_queue
-    _local_input_queue = queue
-
-
-@eel.expose
-def process_frontend_text(data):
-    """Function to process data from the frontend."""
-    print(data)
-    output_data = {"data": data, "source": "frontend"}
-
-    _local_input_queue.put(output_data)
 
 
 class EelGuiModule(AbstractActionProcess):
     """Graphical user interface using eel."""
 
-    def __init__(self, manager: SyncManager, *args, output_queues=None, **kwargs):
+    def __init__(
+        self,
+        manager: SyncManager,
+        *args,
+        output_queues: Iterable[Queue] = None,
+        **kwargs,
+    ):
         super().__init__(manager, "gui", *args, output_queues=output_queues, **kwargs)
+        self.history: list = list()
 
-    def run(self, *args, **kwargs):
-        _set_queue(self.input_queue)
+    def run(self, *args, **kwargs) -> None:
+        # Set global object so that the function used for eel can also access the object
+        # pylint: disable=global-statement
+        global _GUI_MODULE
+        _GUI_MODULE = self
+        # pylint: enable=global-statement
 
         eel.init("resources/web_folder")
         eel.start("main.html", block=False, size=(1000, 1000))
 
         super().run(*args, **kwargs)
 
-    def process(self, data_in: dict):
+    def process(self, data_in: dict) -> None:
+        self.history.append(data_in)
         eel.update(data_in)
 
         return None
@@ -44,7 +42,7 @@ class EelGuiModule(AbstractActionProcess):
     def clean_up(self):
         pass
 
-    def _run(self, **kwargs):
+    def _run(self, **kwargs) -> None:
         """Run function which executes the process method."""
         while not self._e_stop_process.is_set():
             # Get data to process
@@ -68,3 +66,22 @@ class EelGuiModule(AbstractActionProcess):
 
                         for queue in self.output_queues:
                             queue.put(out_data)
+
+
+_GUI_MODULE: EelGuiModule = None
+
+
+@eel.expose
+def process_frontend_text(data: dict) -> None:
+    """Function to process data from the frontend."""
+    print(data)
+    output_data = {"data": data, "source": "frontend"}
+
+    _GUI_MODULE.input_queue.put(output_data)
+
+
+@eel.expose
+def get_data() -> None:
+    """Function for frontend to fetch data."""
+    for data in _GUI_MODULE.history:
+        eel.update(data)

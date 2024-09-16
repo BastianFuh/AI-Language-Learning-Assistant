@@ -58,3 +58,5 @@ function send_text_to_backend() {
 
 
 document.getElementById("btn-submit-text-input").addEventListener("click", send_text_to_backend)
+
+eel.get_data()
