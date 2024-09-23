@@ -21,11 +21,7 @@ class gTTSModule(AbstractActionProcess):
         super().__init__(manager, "tts", output_queues=output_queues)
 
     def process(self, data_in):
-        #
-
-        # self.logger.info(f"Received Data {data_in}")
-
-        audio = gTTS(data_in["data"])
+        audio = gTTS(data_in["data"], lang=self.language, tld=self.accent)
 
         mp3_fp = BytesIO()
         audio.write_to_fp(mp3_fp)
