@@ -13,4 +13,4 @@ gTTS==2.5.3
 cutlet==0.4.0
 fugashi[unidic-lite]
 --extra-index-url https://download.pytorch.org/whl/cu124
-torch==2.6.0+cu124
+torch==2.7.0+cu124
