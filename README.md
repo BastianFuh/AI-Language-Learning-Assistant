@@ -1,3 +1,5 @@
+This project is now deprecated. Please check out https://github.com/BastianFuh/LLA-Agent for an Agent based system. 
+
 # AI-Language-Learning-Assistant
 
 The goal of this project is to create an application that can be used to train writing, speaking, and listening language comprehension skills.
